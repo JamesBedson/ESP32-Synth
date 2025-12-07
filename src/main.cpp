@@ -3,21 +3,22 @@
 #include "Sequencer/Pattern.h"
 #include "Sequencer/Sequencer.h"
 #include "Sequencer/PlaybackEngine.h"
+#include "Web/WebServerManager.h"
 
 #define STACK_DEPTH 4096
 
 TaskHandle_t audioTaskHandle = NULL;
-
 I2SDriver i2sDriver;
 Pattern<Constants::MAX_STEP_SIZE> pattern(4);
 Sequencer sequencer(180.0f);
 Synth synth;
-
 PlaybackEngine engine(
 	sequencer, 
 	pattern, 
 	synth
 );
+
+WebServerManager webServer;
 
 void audioCallback(void* param)
 {
@@ -40,6 +41,9 @@ void audioCallback(void* param)
 void setup() 
 {
 	Serial.begin(115200);
+	Serial.println("Booting...");
+	
+	webServer.begin();
 
 	i2sDriver.begin();
 
