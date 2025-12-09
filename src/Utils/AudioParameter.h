@@ -3,8 +3,6 @@
 #include <atomic>
 #include "AudioParameterBase.h"
 
-class AudioParameterTree;
-
 template<typename T>
 class AudioParameter : public AudioParameterBase {
 
@@ -16,20 +14,27 @@ public:
     );
 
     AudioParameter(
-        const std::string& id, 
-        T defaultValue
-    ) : id(id), value(defaultValue) {
+        const std::string& id,
+        T defaultValue,
+        T minValue,
+        T maxValue
+    )
+        : id(id),
+          value(defaultValue),
+          defaultValue(defaultValue),
+          minValue(minValue),
+          maxValue(maxValue)
+    {
     }
 
     const std::string& getID() const override { return id; }
 
     void setValueFromFloat(float v) override {
+        T clamped = clamp(static_cast<T>(v));
+        T oldVal = value.exchange(clamped);
 
-        T newVal = static_cast<T>(v);
-        T oldVal = value.exchange(newVal);
-
-        if (newVal != oldVal && tree) {
-            tree->notifyParameterChanged(this, v);
+        if (clamped != oldVal && onChange) {
+            onChange(this, clamped);
         }
     }
 
@@ -40,21 +45,32 @@ public:
     T get() const { return value.load(); }
 
     void set(T v) { 
-        T oldVal = value.exchange(v);
+        T clamped = clamp(v);
+        T oldVal = value.exchange(clamped);
         
-        if (oldVal != v && tree) {
-            tree->notifyParameterChanged(this, static_cast<float>(v));
+        if (oldVal != clamped && onChange) {
+            onChange(this, static_cast<float>(clamped));
         }
     }
 
-    void attachTree(AudioParameterTree* t) {
-        tree = t;
+    float getNormalised() const {
+        T v = value.load();
+        return (v - minValue) / (maxValue - minValue);
     }
 
+    void setNormalised(float norm) {
+        float f = minValue + norm * (maxValue - minValue);
+        setValueFromFloat(f);
+    }
 
 private:
+
+    T clamp(T v) const {
+        return v < minValue ? minValue : (v > maxValue ? maxValue : v);
+    }
     std::string id;
     std::atomic<T> value;
-
-    AudioParameterTree* tree = nullptr;
+    T defaultValue;
+    T minValue;
+    T maxValue;
 };

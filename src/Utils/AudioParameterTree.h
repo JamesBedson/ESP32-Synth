@@ -5,41 +5,48 @@
 #include "AudioParameter.h"
 #include "../IParameterListener.h"
 
-class AudioParameterTree {
+class AudioParameterTree
+{
 
 public:
+    template <typename T>
+    void add(AudioParameter<T> *param)
+    {
+        const std::string &id = param->getID();
 
-    template<typename T>
-    void add(AudioParameter<T>* param) {
-        
-        param->attachTree(this);
-        const std::string& id = param->getID();
-        
         // Assign new index
         int index = nextIndex++;
         idToIndex[id] = index;
 
         if (index >= indexToParam.size())
             indexToParam.resize(index + 1);
-        
+
         indexToParam[index] = param;
 
         paramToIndex[param] = index;
+
+        param->onChange =
+            [this](AudioParameterBase *p, float v)
+        {
+            this->notifyParameterChanged(p, v);
+        };
     }
 
-        void addParameterListener(IParameterListener* l) {
+    void addParameterListener(IParameterListener *l)
+    {
         listener = l;
     }
 
     // ======================================================
     // DSP --> UI
     // ======================================================
-    void notifyParameterChanged(AudioParameterBase* param, float value) {
+    void notifyParameterChanged(AudioParameterBase *param, float value)
+    {
         auto it = paramToIndex.find(param);
         if (it == paramToIndex.end())
             return;
 
-        int index = it->second; 
+        int index = it->second;
         if (listener)
             listener->onParameterChanged(index, value);
     }
@@ -48,22 +55,24 @@ public:
     // UI --> DSP
     // ======================================================
 
-    bool setParameter(const std::string& id, float value) {
+    bool setParameter(const std::string &id, float value)
+    {
         auto it = idToIndex.find(id);
         if (it == idToIndex.end())
             return false;
-        
+
         int index = it->second;
-        AudioParameterBase* param = indexToParam[index];
+        AudioParameterBase *param = indexToParam[index];
         param->setValueFromFloat(value);
         return true;
     }
 
-    float getAsFloat(const std::string& id) {
+    float getAsFloat(const std::string &id)
+    {
         auto it = idToIndex.find(id);
-        if (it == idToIndex.end()) 
+        if (it == idToIndex.end())
             return -1.0f;
-        
+
         int index = it->second;
         return indexToParam[index]->getValueAsFloat();
     }
@@ -72,7 +81,8 @@ public:
     // Mapping
     // ======================================================
 
-    const std::string& getIDFromIndex(int idx) const {
+    const std::string &getIDFromIndex(int idx) const
+    {
         static const std::string empty = "";
         if (!isValidIndex(idx))
             return empty;
@@ -80,7 +90,8 @@ public:
         return indexToParam[idx]->getID();
     }
 
-    AudioParameterBase* getParameterByIndex(int index) const {
+    AudioParameterBase *getParameterByIndex(int index) const
+    {
         if (!isValidIndex(index))
             return nullptr;
 
@@ -88,17 +99,18 @@ public:
     }
 
 private:
-
-    bool isValidIndex(int index) const {
+    bool isValidIndex(int index) const
+    {
         int numIndexes = static_cast<int>(indexToParam.size());
-        if (index >= 0 && index < numIndexes) return true;
+        if (index >= 0 && index < numIndexes)
+            return true;
         return false;
     }
 
     std::unordered_map<std::string, int> idToIndex;
-    std::unordered_map<AudioParameterBase*, int> paramToIndex;
-    std::vector<AudioParameterBase*> indexToParam;
+    std::unordered_map<AudioParameterBase *, int> paramToIndex;
+    std::vector<AudioParameterBase *> indexToParam;
 
-    IParameterListener* listener = nullptr;
+    IParameterListener *listener = nullptr;
     int nextIndex = 0;
 };

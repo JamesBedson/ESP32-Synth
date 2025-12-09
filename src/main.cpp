@@ -4,6 +4,11 @@
 #include "Sequencer/Sequencer.h"
 #include "Sequencer/PlaybackEngine.h"
 #include "Web/WebServerManager.h"
+#include "Utils/AudioParameterTree.h"
+#include "MessageBridge.h"
+#include "Web/WebMessageHandler.h"
+#include "Utils/AudioBuffer.h"
+#include "Utils/AudioOutputConverter.h"
 
 #define STACK_DEPTH 4096
 
@@ -13,47 +18,65 @@ Pattern<Constants::MAX_STEP_SIZE> pattern(4);
 Sequencer sequencer(180.0f);
 Synth synth;
 PlaybackEngine engine(
-	sequencer, 
-	pattern, 
-	synth
-);
+	sequencer,
+	pattern,
+	synth);
 
-WebServerManager webServer;
+WebMessageHandler handler;
+WebServerManager webServer(handler);
 
-void audioCallback(void* param)
+AudioParameterTree tree;
+MessageBridge bridge(tree);
+
+AudioFloatBuffer floatBuf(Constants::BUFFER_SIZE, Constants::CHANNELS);
+int16_t intBuf[Constants::BUFFER_SIZE * Constants::CHANNELS];
+
+void audioCallback(void *param)
 {
-
 	const float bufferMs = (Constants::BUFFER_SIZE * 1000.0f) / Constants::SAMPLE_RATE;
-	int16_t buffer[Constants::BUFFER_SIZE * Constants::CHANNELS];
-
-	sequencer.start();
 
 	while (true)
 	{
+		floatBuf.clear();
+
 		engine.update(bufferMs);
+		synth.renderAudio(
+			floatBuf.data(), 
+			Constants::BUFFER_SIZE, 
+			Constants::CHANNELS
+		);
 
-		synth.renderAudio(buffer, Constants::BUFFER_SIZE);
+		AudioOutputConverter::floatToInt16(
+			floatBuf.data(),
+			intBuf,
+			Constants::BUFFER_SIZE * Constants::CHANNELS);
 
-		i2sDriver.write(buffer, sizeof(buffer));
+		i2sDriver.write(intBuf, sizeof(intBuf));
 	};
 }
 
-void setup() 
+void setup()
 {
 	Serial.begin(115200);
 	Serial.println("Booting...");
-	
-	webServer.begin();
 
+	bridge.connectToWebHandler(handler);
+	tree.add(&synth.amplitude);
+
+	sequencer.start();
+
+	webServer.begin();
 	i2sDriver.begin();
 
-	for (int i = 0; i < 16; i++) 
-    {
-        Step& s = pattern.getStep(i);
-        s.setGate(true);
-        s.setNote(60 + (i % 4) * 2);
-    }
-	// Audio callback
+	for (int i = 0; i < 16; i++)
+	{
+		Step &s = pattern.getStep(i);
+		s.setGate(true);
+		s.setNote(60 + (i % 4) * 2);
+	}
+
+	// tree.add(&synth.frequency);
+	//  Audio callback
 	xTaskCreatePinnedToCore(
 		audioCallback,
 		"Audio Callback",
@@ -61,11 +84,11 @@ void setup()
 		NULL,
 		3,
 		&audioTaskHandle,
-		1
-	);
+		1);
 }
 
-void loop() 
+void loop()
 {
-
+	bridge.processPendingMessages();
+	delay(1);
 }

@@ -1,13 +1,17 @@
 #pragma once
 #include <string>
 
-enum WebCommandType {
+enum class WebMessageType {
     SetParameter,
-    GetParameter
+    GetParameter,
+    Command,
+    Param
 };
 
 struct WebMessage {
-    WebCommandType type;
+    WebMessageType type;
     std::string paramID;
-    float value;
+    float value = 0.0f;
+    std::string command;
+    std::string args;
 };

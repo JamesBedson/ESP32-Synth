@@ -8,57 +8,90 @@
 // - Take UI messages and forward them to ParameterTree
 // - Take parameter change notifications and send them to WebMessageHandler
 
-class MessageBridge : public IParameterListener 
+class MessageBridge : public IParameterListener
 {
-
 public:
-    MessageBridge(
-        AudioParameterTree& parameterTree,
-        WebMessageHandler& webHandler
-    ) : tree(parameterTree), handler(webHandler) 
+    MessageBridge(AudioParameterTree &parameterTree)
+        : tree(parameterTree)
     {
         tree.addParameterListener(this);
     }
 
-    // UI --> DSP
-    void handle(const WebMessage& msg) {
-        switch (msg.type) {
+    void connectToWebHandler(WebMessageHandler &handler)
+    {
+        // UI → DSP
+        handler.sendUpdateToBackend =
+            [this](const WebMessage &msg)
+        {
+            this->handleUIMessage(msg);
+        };
 
-            case WebCommandType::GetParameter: {
+        // DSP → UI
+        sendToUI =
+            [&](const WebMessage &msg)
+        {
+            handler.sendMessageToUI(msg);
+        };
+    }
+
+    // UI requests → DSP
+    void handleUIMessage(const WebMessage &msg)
+    {
+        switch (msg.type)
+        {
+            // UI asks DSP for parameter update
+            case WebMessageType::GetParameter:
+            {
                 float value = tree.getAsFloat(msg.paramID);
-                handler.sendParameterUpdate(msg.paramID, value);
+
+                if (sendToUI)
+                {
+                    WebMessage reply;
+                    reply.type = WebMessageType::Param;
+                    reply.paramID = msg.paramID;
+                    reply.value = value;
+
+                    sendToUI(reply);
+                }
                 break;
             }
-
-            case WebCommandType::SetParameter: {
+            
+            // UI requests to send a parameter change
+            case WebMessageType::SetParameter:
+            {
                 tree.setParameter(msg.paramID, msg.value);
                 break;
             }
         }
     }
 
-    // DSP --> UI
-    void onParameterChanged(int index, float value) override {
-        queue.push(
-            { 
-                index,
-                value
-            }
-        );
-    }
+    // Bridge sends → UI
+    void processPendingMessages()
+    {
+        if (!sendToUI)
+            return;
 
-    void processPendingMessages() {
-        PendingParam msg;
+        PendingParam p;
+        while (queue.pop(p))
+        {
+            WebMessage wm;
+            wm.type = WebMessageType::Param;               // DSP → UI update
+            wm.paramID = tree.getIDFromIndex(p.index);     // parameter ID
+            wm.value = p.value;                            // new value
 
-        while (queue.pop(msg)) {
-            const std::string& id = tree.getIDFromIndex(msg.index);
-            handler.sendParameterUpdate(id, msg.value);
+            sendToUI(wm);  // WebMessage → WebMessageHandler → JSON → UI
         }
     }
 
+    // DSP → Bridge
+    void onParameterChanged(int index, float value) override
+    {
+        queue.push({index, value});
+    }
 
 private:
-    struct PendingParam {
+    struct PendingParam
+    {
         int index;
         float value;
     };
@@ -66,6 +99,6 @@ private:
     static constexpr size_t QUEUE_SIZE = 256;
     LockFreeQueue<PendingParam, QUEUE_SIZE> queue;
 
-    AudioParameterTree& tree;
-    WebMessageHandler& handler;    
+    AudioParameterTree &tree;
+    std::function<void(const WebMessage &)> sendToUI;
 };
