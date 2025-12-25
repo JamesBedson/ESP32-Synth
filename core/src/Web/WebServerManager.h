@@ -2,12 +2,19 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include "WebMessageHandler.h"
+#include <LittleFS.h>
 
 class WebServerManager
 {
 public:
     WebServerManager(WebMessageHandler& handler) : server(80), ws("/ws"), messageHandler(handler)
     {
+        // Mount LittleFS in constructor
+        if (!LittleFS.begin(true)) {
+            Serial.println("❌ LittleFS Mount Failed");
+        } else {
+            Serial.println("✅ LittleFS mounted successfully");
+        }
     }
 
     void begin()
@@ -28,14 +35,10 @@ public:
         Serial.print("IP Address: ");
         Serial.println(WiFi.localIP());
 
-        // Serve webpage
-        server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request)
-                  { request->send(200, "text/html", htmlPage); });
-
         ws.onEvent(
             [this](
-                AsyncWebSocket *server,
-                AsyncWebSocketClient *client,
+                AsyncWebSocket* server,
+                AsyncWebSocketClient* client,
                 AwsEventType type,
                 void *arg,
                 uint8_t *data,
@@ -45,8 +48,20 @@ public:
             });
 
         server.addHandler(&ws);
+
+        server.serveStatic("/", LittleFS, "/")
+            .setDefaultFile("index.html")
+            .setCacheControl("no-cache");
+
+        server.onNotFound([](AsyncWebServerRequest* request) {
+            Serial.printf("Not found: %s\n", request->url().c_str());
+            request->send(404, "text/plain", "Not Found");
+        });
+
         server.begin();
         Serial.println("Web server started.");
+        Serial.print("Visit: http://");
+        Serial.println(WiFi.localIP());
 
         messageHandler.sendJSONToUI = [&](const std::string& json) {
             ws.textAll(json.c_str());
@@ -65,7 +80,7 @@ public:
         if (type == WS_EVT_CONNECT)
         {
             Serial.println("Websocket client connection received");
-            client->text("Hello from ESP32 Server");
+            //client->text("Hello from ESP32 Server");
         }
 
         else if (type == WS_EVT_DISCONNECT)
@@ -94,52 +109,4 @@ private:
     AsyncWebServer server;
     AsyncWebSocket ws;
     WebMessageHandler &messageHandler;
-
-    const char *htmlPage = R"rawliteral(
-<!DOCTYPE html>
-<html>
-<head>
-<title>ESP32 Synth Control</title>
-<style>
-  body { font-family: sans-serif; padding: 20px; }
-  .label { margin-top: 20px; font-weight: bold; }
-</style>
-</head>
-<body>
-
-<h1>ESP32 Synth Controller</h1>
-
-<div class="label">Amplitude</div>
-<input type="range" id="amp" min="0" max="1" step="0.01" value="0.5">
-
-<script>
-let socket = new WebSocket("ws://" + window.location.host + "/ws");
-
-// When we get JSON from ESP32
-socket.onmessage = function(event) {
-    let msg = JSON.parse(event.data);
-
-    if (msg.type === "param" && msg.id === "synth.amplitude") {
-        document.getElementById("amp").value = msg.value;
-    }
-};
-
-// When slider moves → send JSON to ESP32
-document.getElementById("amp").addEventListener("input", (e) => {
-    let value = parseFloat(e.target.value);
-
-    let msg = {
-        type: "set",
-        id: "synth.amplitude",
-        value: value
-    };
-
-    socket.send(JSON.stringify(msg));
-});
-</script>
-
-</body>
-</html>
-)rawliteral";
-
 };

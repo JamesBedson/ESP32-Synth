@@ -16,11 +16,11 @@ class I2SDriver {
                 .sample_rate = Constants::SAMPLE_RATE,
                 .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
                 .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-                .communication_format = I2S_COMM_FORMAT_I2S_MSB,
+                .communication_format = (i2s_comm_format_t) (I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
                 .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // priority level
                 .dma_buf_count = 8,
                 .dma_buf_len = 64, // 8 x 64 = 512 samples of audio
-                .use_apll = false
+                .use_apll = true
             };
 
             pin_config = 

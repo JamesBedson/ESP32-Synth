@@ -23,11 +23,11 @@ void Synth::renderAudio(float *buffer, int numSamples, int numChannels)
     #define M_TWOPI (2.0f * M_PI)
     #endif
 
-    const float phaseIncrement = (M_TWOPI * frequency.get()) / Constants::SAMPLE_RATE;
+    const double phaseIncrement = (M_TWOPI * smoothedFreq.getRawValue()) / Constants::SAMPLE_RATE;
 
     for (int i = 0; i < numSamples; i++)
     {
-        float sample = amplitude.get() * sinf(phase);
+        float sample = smoothedAmplitude.getNextValue() * sin(phase);
 
         for (int ch = 0; ch < numChannels; ch++)
         {

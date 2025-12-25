@@ -59,7 +59,9 @@ public:
             // UI requests to send a parameter change
             case WebMessageType::SetParameter:
             {
+                suppressUIFeedback = true;
                 tree.setParameter(msg.paramID, msg.value);
+                suppressUIFeedback = false;
                 break;
             }
         }
@@ -78,7 +80,7 @@ public:
             wm.type = WebMessageType::Param;               // DSP → UI update
             wm.paramID = tree.getIDFromIndex(p.index);     // parameter ID
             wm.value = p.value;                            // new value
-
+            
             sendToUI(wm);  // WebMessage → WebMessageHandler → JSON → UI
         }
     }
@@ -86,6 +88,9 @@ public:
     // DSP → Bridge
     void onParameterChanged(int index, float value) override
     {
+        if (suppressUIFeedback)
+            return;
+            
         queue.push({index, value});
     }
 

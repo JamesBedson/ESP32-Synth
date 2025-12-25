@@ -51,6 +51,7 @@ void audioCallback(void *param)
 			intBuf,
 			Constants::BUFFER_SIZE * Constants::CHANNELS);
 
+		//Serial.println(intBuf[0]);
 		i2sDriver.write(intBuf, sizeof(intBuf));
 	};
 }

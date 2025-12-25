@@ -5,3 +5,7 @@
 .vscode/ipch
 .DS_Store
 wifi_secrets.ini
+node_modules
+.python-version
+*/data
+.paramgen.toml
