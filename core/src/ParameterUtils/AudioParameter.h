@@ -3,6 +3,7 @@
 #include <string>
 #include <atomic>
 #include <type_traits>
+#include <utility>
 #include "AudioParameterBase.h"
 
 // Forward declaration of generator access
@@ -19,6 +20,31 @@ public:
     );
 
     const std::string& getID() const override { return id; }
+
+    AudioParameter(const AudioParameter& other) = delete;
+    AudioParameter& operator=(const AudioParameter& other) = delete;
+
+    AudioParameter(AudioParameter&& other) noexcept
+        : id(std::move(other.id)),
+          value(),
+          defaultValue(other.defaultValue),
+          minValue(other.minValue),
+          maxValue(other.maxValue)
+    {
+        value.store(other.value.load());
+    }
+
+    AudioParameter& operator=(AudioParameter&& other) noexcept
+    {
+        if (this != &other) {
+            id = std::move(other.id);
+            value.store(other.value.load());
+            defaultValue = other.defaultValue;
+            minValue = other.minValue;
+            maxValue = other.maxValue;
+        }
+        return *this;
+    }
 
     void setValueFromFloat(float v) override {
         T clamped = clamp(static_cast<T>(v));

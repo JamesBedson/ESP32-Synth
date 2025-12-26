@@ -1,8 +1,8 @@
-#include "Utils/AudioParameterTree.h"
-#include "Web/WebMessage.h"
-#include "Web/WebMessageHandler.h"
-#include "IParameterListener.h"
-#include "Utils/LockFreeQueue.h"
+#include "../ParameterUtils/AudioParameterTree.h"
+#include "../Web/WebMessage.h"
+#include "../Web/WebMessageHandler.h"
+#include "../ParameterUtils/IParameterListener.h"
+#include "../Utils/LockFreeQueue.h"
 
 // Middle man class that knows how to
 // - Take UI messages and forward them to ParameterTree

@@ -1,0 +1,93 @@
+# Template schema (comments only).
+# Copy these blocks into your schema and replace the placeholders.
+#
+# Valid "type" values:
+# - "float"
+# - "int"
+# - "bool"
+# - "choice"   (proposed)
+#
+# Optional UI metadata fields (all types):
+# - label = "Display Name"
+# - unit  = "Hz" | "ms" | "dB" | ...
+# - ui    = "knob" | "slider" | "toggle" | "button" | "select" | "segmented" | "radio"
+# - step  = 0.1 | 1 | ...
+#
+# Required numeric fields (float/int/bool):
+# - default = <number|true|false>
+# - min = <number>
+# - max = <number>
+#
+# Proposed choice fields:
+# - choices = ["option_a", "option_b", "option_c"]
+# - default = "option_a"   # or index (0..N-1) if you choose index-based defaults
+#
+# -----------------------------
+# Float parameter template
+# -----------------------------
+# [params.cutoff]
+# type = "float"
+# default = 1000.0
+# min = 20.0
+# max = 20000.0
+# label = "Cutoff"
+# unit = "Hz"
+# ui = "knob"
+# step = 1.0
+#
+# -----------------------------
+# Int parameter template
+# -----------------------------
+# [params.voices]
+# type = "int"
+# default = 8
+# min = 1
+# max = 64
+# label = "Voices"
+# ui = "slider"
+# step = 1
+#
+# -----------------------------
+# Bool parameter template
+# -----------------------------
+# [params.enabled]
+# type = "bool"
+# default = true
+# min = 0
+# max = 1
+# label = "Enabled"
+# ui = "toggle"
+#
+# -----------------------------
+# Choice parameter template
+# -----------------------------
+# [params.osc_shape]
+# type = "choice"
+# choices = ["sine", "square", "saw", "triangle"]
+# default = "sine"
+# label = "Osc Shape"
+# ui = "select"
+#
+# ------------------------------------------
+# Direct-id table (no [params] wrapper)
+# ------------------------------------------
+# Use a dotted table name for the ID:
+# [synth.waves]
+# type = "choice"
+# choices = ["sine", "square", "saw", "triangle"]
+# default = "sine"
+# label = "Waves"
+# ui = "segmented"
+#
+# ------------------------------------------
+# Choice parameter template (index-based)
+# ------------------------------------------
+# Under the hood, DSP stores an int index (0..N-1),
+# while the schema uses string labels for readability.
+# Generated code will expose a typed enum + a mapping.
+# [params.filter_mode]
+# type = "choice"
+# choices = ["lowpass", "highpass", "bandpass"]
+# default = "lowpass"
+# label = "Filter Mode"
+# ui = "segmented"

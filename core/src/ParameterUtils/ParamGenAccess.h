@@ -11,11 +11,6 @@ struct __ParamGenAccess
         T max
     )
     {
-        struct Builder : public AudioParameter<T> {
-            Builder(const char* i, T d, T mn, T mx)
-                : AudioParameter<T>(i, d, mn, mx) {}
-        };
-
-        return Builder(id, def, min, max);
+        return AudioParameter<T>(id, def, min, max);
     }
 };

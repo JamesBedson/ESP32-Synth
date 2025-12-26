@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 import time, pathlib, subprocess, sys
 
-SCHEMA_DIR = pathlib.Path(".paramgen.toml").read_text().split("schema_dir =")[1].split("\n")[0].strip().strip('"')
-GEN_CMD = ["python", "tools/param-gen/paramgen.py", "gen"]
+CONFIG = pathlib.Path(".paramgen.toml")
+SCHEMA_DIR = CONFIG.read_text().split("schema_dir =")[1].split("\n")[0].strip().strip('"')
+GEN_SCRIPT = pathlib.Path("tools/param-gen/paramgen.py")
+GEN_CMD = ["python", str(GEN_SCRIPT), "gen"]
 
 def snapshot():
-    return {p: p.stat().st_mtime for p in pathlib.Path(SCHEMA_DIR).glob("*.toml")}
+    files = list(pathlib.Path(SCHEMA_DIR).glob("*.toml"))
+    files.extend([CONFIG, GEN_SCRIPT])
+    return {p: p.stat().st_mtime for p in files if p.exists()}
 
 last = snapshot()
 print("🔁 Watching parameter schemas...")

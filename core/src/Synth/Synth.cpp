@@ -1,8 +1,21 @@
 #include "Synth.h"
 
+Synth::Synth()
+    : params(SynthParams::instance()),
+      smoothedAmplitude(params.amplitude, Constants::SAMPLE_RATE, 0.02f, SmoothingMode::Linear),
+      smoothedFreq(params.frequency, Constants::SAMPLE_RATE, 0.0001f, SmoothingMode::Exponential)
+{
+}
+
+void Synth::registerParams(AudioParameterTree& tree)
+{
+    tree.add(&params.amplitude);
+    tree.add(&params.frequency);
+}
+
 void Synth::noteOn(float freq)
 {
-    this->frequency.set(freq);
+    this->params.frequency.set(freq);
     this->active = true;
 }
 

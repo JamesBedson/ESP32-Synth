@@ -3,7 +3,8 @@
 #include <string>
 #include <vector>
 #include "AudioParameter.h"
-#include "../IParameterListener.h"
+#include "ChoiceParameter.h"
+#include "IParameterListener.h"
 
 class AudioParameterTree
 {
@@ -30,6 +31,12 @@ public:
         {
             this->notifyParameterChanged(p, v);
         };
+    }
+
+    template <typename EnumT, size_t N>
+    void add(ChoiceParameter<EnumT, N> *param)
+    {
+        add(&param->raw());
     }
 
     void addParameterListener(IParameterListener *l)

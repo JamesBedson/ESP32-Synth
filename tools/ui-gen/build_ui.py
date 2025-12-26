@@ -9,12 +9,12 @@ def build_ui(source, target, env):
     print("=" * 50)
 
     project_dir = env.get("PROJECT_DIR")
-    ui_src_dir = os.path.join(project_dir, "ui-src")
+    ui_src_dir = os.path.join(project_dir, "ui")
     build_dir = os.path.join(project_dir, "data-build")
     data_dir = os.path.join(project_dir, "data")
 
     if not os.path.exists(ui_src_dir):
-        print("Warning: /ui-src directory not found")
+        print("Warning: /ui directory not found")
         return
     
     print("Running npm build...")

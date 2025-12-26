@@ -1,20 +1,17 @@
 #pragma once
 #include <stdint.h>
 #include "../Utils/Constants.h"
-#include "../Parameters/AudioParameter.h"
-#include "../Parameters/SmoothedAudioParameter.h"
+#include "../Generated/SynthParams.h"
+#include "../Infrastructure/IDspModule.h"
+#include "../ParameterUtils/SmoothedAudioParameter.h"
+#include "../ParameterUtils/SmoothingMode.h"
 #include <math.h>
 
-class Synth 
+class Synth : public IDspModule
 {
 public:
-    AudioParameter<float> frequency {"synth.frequency", 440.f, 20.f, 10000.f};
-    AudioParameter<float> amplitude {"synth.amplitude", 0.5f, 0.f, 1.f};
-
-    SmoothedAudioParameter<float> smoothedAmplitude {amplitude, Constants::SAMPLE_RATE, 0.02f, SmoothingMode::Linear};
-    SmoothedAudioParameter<float> smoothedFreq {frequency, Constants::SAMPLE_RATE, 0.0001f, SmoothingMode::Exponential};
-
-
+    Synth();
+    void registerParams(AudioParameterTree& tree) override;
     void noteOn(float freq);
     void noteOff();
 
@@ -24,7 +21,11 @@ public:
         int numChannels
     );
 
+    SmoothedAudioParameter<float> smoothedAmplitude;
+    SmoothedAudioParameter<float> smoothedFreq;
+
 private:
+    SynthParams& params;
     bool active = false;
     double phase = 0.0;
 };

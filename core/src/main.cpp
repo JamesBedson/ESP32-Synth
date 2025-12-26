@@ -4,8 +4,8 @@
 #include "Sequencer/Sequencer.h"
 #include "Sequencer/PlaybackEngine.h"
 #include "Web/WebServerManager.h"
-#include "Utils/AudioParameterTree.h"
-#include "MessageBridge.h"
+#include "ParameterUtils/AudioParameterTree.h"
+#include "Infrastructure/MessageBridge.h"
 #include "Web/WebMessageHandler.h"
 #include "Utils/AudioBuffer.h"
 #include "Utils/AudioOutputConverter.h"
@@ -62,7 +62,7 @@ void setup()
 	Serial.println("Booting...");
 
 	bridge.connectToWebHandler(handler);
-	tree.add(&synth.amplitude);
+	synth.registerParams(tree);
 
 	sequencer.start();
 
