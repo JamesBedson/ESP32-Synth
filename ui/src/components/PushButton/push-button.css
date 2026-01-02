@@ -1,0 +1,50 @@
+push-button {
+  display: inline-block;
+}
+
+push-button button {
+  all: unset;
+
+  box-sizing: border-box;
+  min-width: 80px;
+  padding: 8px 14px;
+
+  border-radius: 16px;
+  border: 1px solid var(--border);
+
+  background: var(--surface);
+  color: var(--text-primary);
+
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.05s ease;
+}
+
+push-button button:hover {
+  background: var(--accent-secondary);
+}
+
+push-button button:active {
+  background: var(--accent-primary);
+  border: 1px solid var(--border);
+  transform: translateY(-1px);
+}
+
+push-button button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--outline);
+}
+
+push-button button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

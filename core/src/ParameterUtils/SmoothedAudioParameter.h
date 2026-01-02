@@ -37,7 +37,6 @@ public:
     }
 
 private:
-
     AudioParameter<T>& source;
     ValueSmoother<T> smoother;
     T lastRawValue;

@@ -1,5 +1,6 @@
 export type ParamKind = "float" | "int" | "bool";
 export type ParamUI   = "knob" | "slider" | "toggle" | "button";
+type ParamListener<T> = (value: T) => void;
 
 export class AudioParameter<T> {
   private __brand!: "AudioParameter";
@@ -9,13 +10,14 @@ export class AudioParameter<T> {
   readonly max: number;
   readonly kind: ParamKind;
 
-  // 🟦 Optional UI metadata
+  // Optional UI metadata
   readonly label?: string;
   readonly unit?: string;
   readonly ui?: ParamUI;
   readonly step?: number;
 
   private _value: number;
+  private _listeners: Set<ParamListener<T>> = new Set();
 
   private constructor(
     id: string,
@@ -73,11 +75,25 @@ export class AudioParameter<T> {
   }
 
   set(v: T) {
+    const before = this._value;
+
     switch (this.kind) {
       case "bool": this._value = (v as unknown as boolean) ? 1 : 0; break;
       case "int":  this._value = Math.round(v as unknown as number); break;
       default:     this._value = v as unknown as number;
     }
+
+    if (this._value !== before) this._emit();
+  }
+
+  onChange(cb: ParamListener<T>): () => void {
+    this._listeners.add(cb);
+    return () => this._listeners.delete(cb);
+  }
+
+  private _emit() {
+    const v = this.get(); // typed value
+    for (const cb of this._listeners) cb(v);
   }
 
   // ======================
@@ -89,7 +105,9 @@ export class AudioParameter<T> {
   }
 
   setFromFloat(v: number) {
+    const before = this._value;
     this._value = Math.min(this.max, Math.max(this.min, v));
+    if (this._value !== before) this._emit();
   }
 
   getNormalised(): number {
@@ -97,6 +115,8 @@ export class AudioParameter<T> {
   }
 
   setNormalised(n: number) {
+    const before = this._value;
     this.setFromFloat(this.min + n * (this.max - this.min));
+    if (this._value !== before) this._emit();
   }
 }

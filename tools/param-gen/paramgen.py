@@ -340,6 +340,19 @@ def generate(filename=None):
                 f'("{k}", {d}, {mn}, {mx}, "{v["type"]}", {get_meta(v)});'
             )
 
+        ts_fields = [(identifier(param_var_name(k)), v) for k, v in validated_params]
+        if ts_fields:
+            ts.append("")
+            ts.append("  public all(): Array<AudioParameter<any>> {")
+            ts.append("    return [")
+            for field, v in ts_fields:
+                if v["type"] == "choice":
+                    ts.append(f"      this.{field}.raw(),")
+                else:
+                    ts.append(f"      this.{field},")
+            ts.append("    ];")
+            ts.append("  }")
+
         cpp.append("};")
         ts.append("}")
 

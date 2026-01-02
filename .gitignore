@@ -9,3 +9,5 @@ node_modules
 .python-version
 */data
 .paramgen.toml
+*__pycache__/
+data-build

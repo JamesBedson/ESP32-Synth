@@ -1,4 +1,4 @@
-import type { WebMessage } from "../types/messages.js";
+import type { WebMessage } from "../types/Messages.js";
 
 export class WebSocketService {
 

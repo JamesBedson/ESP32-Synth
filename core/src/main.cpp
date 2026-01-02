@@ -76,7 +76,6 @@ void setup()
 		s.setNote(60 + (i % 4) * 2);
 	}
 
-	// tree.add(&synth.frequency);
 	//  Audio callback
 	xTaskCreatePinnedToCore(
 		audioCallback,

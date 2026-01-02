@@ -21,11 +21,10 @@ public:
         int numChannels
     );
 
-    SmoothedAudioParameter<float> smoothedAmplitude;
-    SmoothedAudioParameter<float> smoothedFreq;
-
 private:
     SynthParams& params;
+    SmoothedAudioParameter<float> smoothedAmplitude;
+    SmoothedAudioParameter<float> smoothedFreq;
     bool active = false;
     double phase = 0.0;
 };

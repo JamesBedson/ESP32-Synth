@@ -1,39 +1,55 @@
+document.documentElement.dataset.theme = "dark";
 import './styles/global.css';
-import { WebSocketService } from './services/websockets';
-import type { WebMessage } from './types/messages';
 
-const ws = new WebSocketService("ws://" + location.hostname + "/ws");
+import './components/Slider/VerticalSlider';
+import './components/ToggleButton/ToggleButton';
 
+// Services
+import { WebSocketService } from './services/WebSocketService';
+import { WebSocketParameterTransport } from './services/WebSocketParameterTransport';
+import { LocalParamTransport } from './services/LocalParameterTransport';
+
+// UI Components
+import type { ToggleButton } from './components/ToggleButton/ToggleButton';
+import type { VerticalSlider } from './components/Slider/VerticalSlider';
+
+// AudioParameters
+import { TestParams } from './types/TestParams';
+// ------------------------------------------------------------
 const app = document.getElementById('app')!;
 app.innerHTML = `
   <h1>ESPSynth Test</h1>
-  <div>
-    <label for="slider">Amplitude: <span id="value">0.50</span></label>
-    <input type="range" id="slider" min="0" max="1" step="0.01" value="0.5">
+
+  <div class="row">
+    <label>Enabled</label>
+    <toggle-button id="enabledToggle"></toggle-button>
+  </div>
+
+  <div class="row">
+    <label>Amplitude</label>
+    <vertical-slider id="slider"></vertical-slider>
   </div>
 `;
 
-const slider = document.getElementById('slider') as HTMLInputElement;
-const valueDisplay = document.getElementById('value')!;
+// Parameter <-> WebSocket Binding
+const isLocal = location.hostname === "localhost";
+const params = TestParams.instance();
+(window as any).params = params;
 
-// Send slider value to ESP32
-slider.addEventListener('input', () => {
-  const value = parseFloat(slider.value);
-  valueDisplay.textContent = value.toFixed(2);
-  
-  ws.send({
-    type: 'set',
-    id: 'synth.amplitude',
-    value: value
-  });
-  
-  console.log('Sent to ESP32:', { type: 'set', id: 'amplitude', value });
-});
+if (isLocal) {
+  const local = new LocalParamTransport();
+  local.bind(params);
+}
 
-ws.onMessage('synth.amplitude', (msg: WebMessage) => {
-  console.log('Received from ESP32:', msg);
-  if (msg.value !== undefined) {
-    slider.value = msg.value.toString();
-    valueDisplay.textContent = msg.value.toFixed(2);
-  }
-});
+else {
+  const ws = new WebSocketService("ws://" + location.hostname + "/ws");
+  const transport = new WebSocketParameterTransport(ws);
+  transport.bind(params);
+}
+
+// Parameter <-> UI Binding
+const enabledToggle = document.getElementById("enabledToggle") as ToggleButton;
+enabledToggle.bind(params.enabled);
+
+const slider = document.getElementById("slider") as VerticalSlider;
+slider.bind(params.amplitude);

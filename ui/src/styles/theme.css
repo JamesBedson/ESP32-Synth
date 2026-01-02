@@ -1,0 +1,18 @@
+/* Dark */
+:root[data-theme="dark"] {
+  --surface: #24292e;
+  --text-primary: #ffffff;
+  --border: #363b42;
+  --accent-primary: #167082;
+  --accent-secondary: #0b3b45;
+}
+
+/* Light */
+:root[data-theme="light"] {
+  --surface: #ffffff;
+  --text-primary: #ffffff;
+  --border: rgba(0, 0, 0, 0.2);
+  --hover: #e7e9ee;
+  --pressed: #d5d8e0;
+  --outline: rgba(56, 103, 255, 0.6);
+}
